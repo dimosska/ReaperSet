@@ -18,11 +18,27 @@ docker build -t reaperset:local .
 
 ## Run
 
+Set the host bridge folder first. It must be the same folder used by REAPER.
+
+macOS/Linux:
+
+```sh
+export REAPERSET_BRIDGE_HOST_DIR="$HOME/.reaperset"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:REAPERSET_BRIDGE_HOST_DIR="$env:USERPROFILE\.reaperset"
+```
+
+Then run:
+
 ```sh
 docker run --rm \
   -p 47391:47391 \
   -e REAPERSET_BRIDGE_DIR=/data \
-  -v "$HOME/.reaperset:/data" \
+  -v "$REAPERSET_BRIDGE_HOST_DIR:/data" \
   reaperset:local
 ```
 
@@ -34,16 +50,23 @@ http://localhost:47391
 
 ## Docker Compose
 
+Set `REAPERSET_BRIDGE_HOST_DIR` first.
+
+macOS/Linux:
+
 ```sh
+export REAPERSET_BRIDGE_HOST_DIR="$HOME/.reaperset"
 docker compose up --build
 ```
 
-On Windows, run Docker Compose from PowerShell with the bridge folder set explicitly:
+Windows PowerShell:
 
 ```powershell
 $env:REAPERSET_BRIDGE_HOST_DIR="$env:USERPROFILE\.reaperset"
 docker compose up --build
 ```
+
+Compose intentionally fails if `REAPERSET_BRIDGE_HOST_DIR` is not set, so it cannot silently mount the wrong folder.
 
 This must point to the same folder where `ReaperSet_Bridge.lua` writes `snapshot.json`.
 

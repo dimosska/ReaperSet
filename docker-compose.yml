@@ -9,5 +9,7 @@ services:
       REAPERSET_PORT: "47391"
       REAPERSET_BRIDGE_DIR: /data
     volumes:
-      - "${REAPERSET_BRIDGE_HOST_DIR:-${HOME}/.reaperset}:/data"
+      - type: bind
+        source: "${REAPERSET_BRIDGE_HOST_DIR:?Set REAPERSET_BRIDGE_HOST_DIR to the host .reaperset folder used by REAPER}"
+        target: /data
     restart: unless-stopped
