@@ -41,10 +41,8 @@ function formatBarsBeats(totalBeats: number, beatsPerBar: number): string {
   const wholeBeats = Math.max(0, Math.ceil(totalBeats - 0.01));
   const bars = Math.floor(wholeBeats / safeBeatsPerBar);
   const beats = wholeBeats % safeBeatsPerBar;
-  const barLabel = bars === 1 ? "bar" : "bars";
-  const beatLabel = beats === 1 ? "beat" : "beats";
 
-  return `${bars} ${barLabel} ${beats} ${beatLabel}`;
+  return `${bars}.${beats}`;
 }
 
 function formatAge(ageMs: number | null): string {
@@ -322,11 +320,15 @@ export function App(): ReactElement {
   const songRemaining = currentSong ? currentSong.endsAtSeconds - snapshot.positionSeconds : 0;
   const nextSongCountdown = nextSong ? nextSong.startsAtSeconds - snapshot.positionSeconds : 0;
   const nextSongFirstSection = nextSong?.sections[0] ?? null;
+  const beatsToNextCue =
+    typeof snapshot.positionBeats === "number" && typeof nextCue?.startsAtBeats === "number"
+      ? nextCue.startsAtBeats - snapshot.positionBeats
+      : null;
   const barsBeatsToNextCue =
-    typeof snapshot.positionBeats === "number" &&
+    typeof beatsToNextCue === "number" &&
     typeof snapshot.beatsPerBar === "number" &&
-    typeof nextCue?.startsAtBeats === "number"
-      ? formatBarsBeats(nextCue.startsAtBeats - snapshot.positionBeats, snapshot.beatsPerBar)
+    beatsToNextCue < snapshot.beatsPerBar * 2
+      ? formatBarsBeats(beatsToNextCue, snapshot.beatsPerBar)
       : null;
   const barsBeatsToNextSong =
     typeof snapshot.positionBeats === "number" &&
@@ -439,7 +441,7 @@ export function App(): ReactElement {
           <strong>{currentSection?.name ?? "No section marker"}</strong>
           <div className="next-cue-line">
             <span>Next cue</span>
-            <strong>{barsBeatsToNextCue ?? "--"}</strong>
+            {barsBeatsToNextCue ? <strong>{barsBeatsToNextCue}</strong> : null}
             <em>{nextCue?.name ?? "No next cue"}</em>
           </div>
           {currentSong && currentSong.sections.length > 0 ? (
@@ -499,13 +501,13 @@ export function App(): ReactElement {
                 <div className="synced-lyrics">
                   {visibleLyrics.map((lyric) => (
                     <div key={lyric.id} className={lyric.active ? "active" : ""}>
-                      <span>{formatTime(lyric.startsAtSeconds - (currentSong?.startsAtSeconds ?? 0))}</span>
                       <strong>{lyric.text}</strong>
                     </div>
                   ))}
                 </div>
-              ) : null}
-              <pre>{currentSong?.lyrics?.trim() ? currentSong.lyrics : "No REAPER @lyric markers for this song."}</pre>
+              ) : (
+                <div className="empty-state">No REAPER @lyric markers for this song.</div>
+              )}
             </div>
           ) : (
             <div className="tab-panel" role="tabpanel">
