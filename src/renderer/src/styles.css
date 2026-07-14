@@ -468,24 +468,8 @@ h1 {
   overflow: hidden;
 }
 
-.tabs {
-  display: flex;
-  gap: 1px;
-  border-bottom: 1px solid #2e3137;
-  background: #2e3137;
-}
-
-.tabs button {
-  flex: 1;
-  border: 0;
-  border-radius: 0;
-  color: #b8bec8;
-  background: #181a1d;
-}
-
-.tabs button.active {
-  color: #f7edd6;
-  background: #2b2418;
+.detail-heading {
+  padding: 16px 18px 0;
 }
 
 .tab-panel {
@@ -686,8 +670,7 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .transport-row button,
-  .tabs button {
+  .transport-row button {
     min-height: 48px;
   }
 

@@ -69,7 +69,6 @@ export function App(): ReactElement {
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [wakeLockState, setWakeLockState] = useState<WakeLockState>("unsupported");
-  const [activeTab, setActiveTab] = useState<"lyrics" | "notes">("lyrics");
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -378,7 +377,7 @@ export function App(): ReactElement {
                 <li key={song.id} className={song.id === currentSong?.id ? "active" : ""}>
                   <span>
                     {song.name}
-                    {song.notes || song.lyrics ? <small>details</small> : null}
+                    {song.lyrics ? <small>lyrics</small> : null}
                   </span>
                   <span>{formatTime(song.endsAtSeconds - song.startsAtSeconds)}</span>
                 </li>
@@ -474,46 +473,22 @@ export function App(): ReactElement {
         </section>
 
         <section className="detail-window">
-          <div className="tabs" role="tablist" aria-label="Song detail view">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "lyrics"}
-              className={activeTab === "lyrics" ? "active" : ""}
-              onClick={() => setActiveTab("lyrics")}
-            >
-              Lyrics
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "notes"}
-              className={activeTab === "notes" ? "active" : ""}
-              onClick={() => setActiveTab("notes")}
-            >
-              Notes
-            </button>
+          <div className="detail-heading">
+            <span className="label">Lyrics</span>
           </div>
-
-          {activeTab === "lyrics" ? (
-            <div className="tab-panel lyrics-tab" role="tabpanel">
-              {visibleLyrics.length > 0 ? (
-                <div className="synced-lyrics">
-                  {visibleLyrics.map((lyric) => (
-                    <div key={lyric.id} className={lyric.active ? "active" : ""}>
-                      <strong>{lyric.text}</strong>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">No REAPER @lyric markers for this song.</div>
-              )}
-            </div>
-          ) : (
-            <div className="tab-panel" role="tabpanel">
-              <pre>{currentSong?.notes?.trim() ? currentSong.notes : "No REAPER @note markers for this song."}</pre>
-            </div>
-          )}
+          <div className="tab-panel lyrics-tab" role="tabpanel" aria-label="Lyrics">
+            {visibleLyrics.length > 0 ? (
+              <div className="synced-lyrics">
+                {visibleLyrics.map((lyric) => (
+                  <div key={lyric.id} className={lyric.active ? "active" : ""}>
+                    <strong>{lyric.text}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">No REAPER @lyric markers for this song.</div>
+            )}
+          </div>
         </section>
       </section>
     </main>
