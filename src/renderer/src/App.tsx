@@ -243,11 +243,19 @@ export function App(): ReactElement {
       : null;
   const songPosition = currentSong ? snapshot.positionSeconds - currentSong.startsAtSeconds : 0;
   const songRemaining = currentSong ? currentSong.endsAtSeconds - snapshot.positionSeconds : 0;
+  const nextSongCountdown = nextSong ? nextSong.startsAtSeconds - snapshot.positionSeconds : 0;
+  const nextSongFirstSection = nextSong?.sections[0] ?? null;
   const barsBeatsToNextCue =
     typeof snapshot.positionBeats === "number" &&
     typeof snapshot.beatsPerBar === "number" &&
     typeof nextCue?.startsAtBeats === "number"
       ? formatBarsBeats(nextCue.startsAtBeats - snapshot.positionBeats, snapshot.beatsPerBar)
+      : null;
+  const barsBeatsToNextSong =
+    typeof snapshot.positionBeats === "number" &&
+    typeof snapshot.beatsPerBar === "number" &&
+    typeof nextSong?.startsAtBeats === "number"
+      ? formatBarsBeats(nextSong.startsAtBeats - snapshot.positionBeats, snapshot.beatsPerBar)
       : null;
 
   return (
@@ -356,6 +364,24 @@ export function App(): ReactElement {
               ))}
             </div>
           ) : null}
+        </section>
+
+        <section className="up-next-panel">
+          <div>
+            <span className="label">Up Next</span>
+            <strong>{nextSong?.name ?? "End of set"}</strong>
+            <small>{nextSongFirstSection ? `Starts with ${nextSongFirstSection.name}` : "No next song queued"}</small>
+          </div>
+          <div className="up-next-metrics">
+            <div>
+              <span className="label">In</span>
+              <strong>{nextSong ? formatTime(nextSongCountdown) : "--"}</strong>
+            </div>
+            <div>
+              <span className="label">Bars/Beats</span>
+              <strong>{nextSong ? (barsBeatsToNextSong ?? "--") : "--"}</strong>
+            </div>
+          </div>
         </section>
 
         <section className="detail-window">

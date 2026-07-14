@@ -50,6 +50,21 @@ The app writes commands for REAPER to:
 
 Song order, notes, lyrics, click tracks, voice cues, and timing remain edited in REAPER.
 
+## REAPER Bridge Setup
+
+1. Open REAPER.
+2. Open `Actions > Show action list...`.
+3. Choose `ReaScript: Load...`.
+4. Select `reaper/ReaperSet_Bridge.lua` from this repository.
+5. Run `ReaperSet_Bridge.lua` from the action list.
+6. Keep the script running while using ReaperSet.
+
+Reload the bridge script after pulling ReaperSet updates that change `reaper/ReaperSet_Bridge.lua`.
+
+The bridge creates `~/.reaperset` automatically. ReaperSet and REAPER must use the same folder so the app can read `snapshot.json` and write `command.txt`.
+
+To use a tablet or another computer on the same network, start ReaperSet on the REAPER machine and open one of the `Local Network` URLs shown in the app status area. Firewalls must allow inbound connections to port `47391`.
+
 ## Development
 
 Install dependencies:

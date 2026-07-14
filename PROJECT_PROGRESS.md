@@ -22,8 +22,8 @@ The Electron and React scaffold is in place. The first local REAPER bridge uses 
 - [x] Convert markers into song sections
 - [x] Sync REAPER playback state to app
 - [x] Send play, pause, and next commands to REAPER
-- [ ] Serve browser UI on local network
-- [ ] Build performance view
+- [x] Serve browser UI on local network
+- [x] Build performance view
 - [x] View REAPER timeline song order
 - [x] Remove app-side setlist editing
 - [x] Add notes support
@@ -87,17 +87,17 @@ Proposed convention:
 ### 3. Stage UI
 
 - [ ] Add large current song display
-- [ ] Add next song display
-- [ ] Add elapsed and remaining time
+- [x] Add next song display
+- [x] Add elapsed and remaining time
 - [x] Add read-only section display
-- [ ] Add tablet-friendly layout
-- [ ] Add reconnect and offline indicators
+- [x] Add tablet-friendly layout
+- [x] Add reconnect and offline indicators
 
 ### 4. Setlist Management
 
 - [x] Use REAPER region order as setlist order
 - [x] Remove named app setlists
-- [ ] Display total show duration
+- [x] Display total show duration
 - [x] Add REAPER-authored notes per song
 - [ ] Add colors per song
 
@@ -117,7 +117,7 @@ Proposed convention:
 
 - [ ] Add Electron installer/build workflow
 - [ ] Add REAPER bridge installer
-- [ ] Document setup process
+- [x] Document setup process
 - [ ] Create demo REAPER project
 
 ### 7. Containerization
