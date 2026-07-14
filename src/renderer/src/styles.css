@@ -192,6 +192,12 @@ li small {
   color: #94e3a9;
 }
 
+.status-pill.connecting,
+.status-pill.reconnecting {
+  border-color: #d6b86a;
+  color: #f7d98a;
+}
+
 .status-pill.offline {
   border-color: #d67171;
   color: #ff9a9a;
@@ -227,6 +233,15 @@ li small {
   min-width: 0;
   min-height: 100vh;
   padding: 24px;
+}
+
+.stage-alert {
+  border: 1px solid #d6b86a;
+  border-radius: 8px;
+  padding: 14px 18px;
+  color: #f7d98a;
+  background: #2b2418;
+  font-weight: 900;
 }
 
 .song-header {

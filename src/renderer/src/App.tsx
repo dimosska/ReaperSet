@@ -26,6 +26,8 @@ const fallbackSnapshot: ReaperSnapshot = {
   updatedAt: new Date().toISOString()
 };
 
+type ConnectionState = "connecting" | "online" | "reconnecting" | "offline";
+
 function formatTime(totalSeconds: number): string {
   const safeSeconds = Math.max(0, totalSeconds);
   const minutes = Math.floor(safeSeconds / 60);
@@ -47,37 +49,89 @@ function formatBarsBeats(totalBeats: number, beatsPerBar: number): string {
 export function App(): ReactElement {
   const [snapshot, setSnapshot] = useState<ReaperSnapshot>(fallbackSnapshot);
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
-  const [connectionState, setConnectionState] = useState<"connecting" | "online" | "offline">("connecting");
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [activeTab, setActiveTab] = useState<"lyrics" | "notes">("lyrics");
   const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<number | null>(null);
 
   const socketUrl = window.reaperSet
     ? `ws://localhost:${window.reaperSet.serverPort}`
     : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
 
   useEffect(() => {
-    const socket = new WebSocket(socketUrl);
-    socketRef.current = socket;
+    let cancelled = false;
+    let reconnectDelay = 750;
 
-    socket.addEventListener("open", () => setConnectionState("online"));
-    socket.addEventListener("close", () => setConnectionState("offline"));
-    socket.addEventListener("error", () => setConnectionState("offline"));
-    socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data)) as ServerEvent;
+    const clearReconnectTimer = () => {
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
 
-      if (message.type === "snapshot") {
-        setSnapshot(message.snapshot);
+    function scheduleReconnect() {
+      if (cancelled) {
         return;
       }
 
-      if (message.type === "bridge.status") {
-        setBridgeStatus(message.status);
-      }
-    });
+      setConnectionState("reconnecting");
+      clearReconnectTimer();
+      reconnectTimerRef.current = window.setTimeout(() => {
+        connect();
+      }, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 1.5, 5_000);
+    }
+
+    function connect() {
+      clearReconnectTimer();
+      setConnectionState((state) => (state === "reconnecting" || state === "offline" ? "reconnecting" : "connecting"));
+
+      const socket = new WebSocket(socketUrl);
+      socketRef.current = socket;
+
+      socket.addEventListener("open", () => {
+        reconnectDelay = 750;
+        setConnectionState("online");
+      });
+
+      socket.addEventListener("close", () => {
+        if (socketRef.current === socket) {
+          socketRef.current = null;
+        }
+        scheduleReconnect();
+      });
+
+      socket.addEventListener("error", () => {
+        setConnectionState("offline");
+        socket.close();
+      });
+
+      socket.addEventListener("message", (event) => {
+        try {
+          const message = JSON.parse(String(event.data)) as ServerEvent;
+
+          if (message.type === "snapshot") {
+            setSnapshot(message.snapshot);
+            return;
+          }
+
+          if (message.type === "bridge.status") {
+            setBridgeStatus(message.status);
+          }
+        } catch {
+          setConnectionState("offline");
+        }
+      });
+    }
+
+    connect();
 
     return () => {
+      cancelled = true;
+      clearReconnectTimer();
+      const activeSocket = socketRef.current;
       socketRef.current = null;
-      socket.close();
+      activeSocket?.close();
     };
   }, [socketUrl]);
 
@@ -179,6 +233,14 @@ export function App(): ReactElement {
   }, [currentSong?.timedLyrics, snapshot.positionSeconds]);
 
   const bridgeLabel = bridgeStatus?.connected ? "bridge online" : "bridge offline";
+  const bridgeIsStale = bridgeStatus !== null && !bridgeStatus.connected;
+  const appIsOnline = connectionState === "online";
+  const canSendCommands = appIsOnline && bridgeStatus?.connected === true;
+  const stageAlert = !appIsOnline
+    ? "Reconnecting to ReaperSet server..."
+    : bridgeIsStale
+      ? "Waiting for REAPER bridge updates..."
+      : null;
   const songPosition = currentSong ? snapshot.positionSeconds - currentSong.startsAtSeconds : 0;
   const songRemaining = currentSong ? currentSong.endsAtSeconds - snapshot.positionSeconds : 0;
   const barsBeatsToNextCue =
@@ -200,15 +262,15 @@ export function App(): ReactElement {
           <span className="label">Transport</span>
           <strong>{snapshot.transport}</strong>
           <div className="transport-row">
-            <button type="button" onClick={() => sendCommand({ type: "transport.play" })}>
+            <button type="button" disabled={!canSendCommands} onClick={() => sendCommand({ type: "transport.play" })}>
               Play
             </button>
-            <button type="button" onClick={() => sendCommand({ type: "transport.pause" })}>
+            <button type="button" disabled={!canSendCommands} onClick={() => sendCommand({ type: "transport.pause" })}>
               Pause
             </button>
             <button
               type="button"
-              disabled={nextSong === null}
+              disabled={!canSendCommands || nextSong === null}
               onClick={() => nextSong && sendCommand({ type: "jump.next", positionSeconds: nextSong.startsAtSeconds })}
             >
               Next
@@ -255,6 +317,7 @@ export function App(): ReactElement {
       </aside>
 
       <section className="stage-panel">
+        {stageAlert ? <div className="stage-alert">{stageAlert}</div> : null}
         <header className="song-header">
           <div>
             <span className="label">Song</span>
