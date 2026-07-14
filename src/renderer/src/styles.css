@@ -110,9 +110,9 @@ button:disabled {
 .eyebrow,
 .label {
   display: block;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: #d6b86a;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -344,6 +344,7 @@ h1 {
 .song-metrics strong {
   display: block;
   font-size: 22px;
+  font-weight: 700;
 }
 
 .song-part {
@@ -360,7 +361,7 @@ h1 {
 .next-cue-line {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 6px 12px;
   align-items: baseline;
   margin-top: 12px;
   padding-top: 12px;
@@ -369,23 +370,24 @@ h1 {
 
 .next-cue-line span {
   color: #d6b86a;
-  font-size: 12px;
+  font-size: clamp(16px, 1.8vw, 24px);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .next-cue-line strong {
   color: #f7edd6;
-  font-size: clamp(16px, 1.8vw, 26px);
+  font-size: clamp(14px, 1.4vw, 22px);
+  font-weight: 700;
   line-height: 1;
 }
 
 .next-cue-line em {
-  color: #f7edd6;
+  color: #d7dce5;
   overflow-wrap: anywhere;
   font-style: normal;
-  font-size: clamp(26px, 3.2vw, 48px);
-  font-weight: 800;
+  font-size: clamp(20px, 2.4vw, 34px);
+  font-weight: 650;
   line-height: 1;
 }
 
@@ -405,7 +407,7 @@ h1 {
   padding: 0 12px;
   color: #d7dce5;
   background: #202226;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .section-strip span.active {
@@ -426,6 +428,7 @@ h1 {
   display: block;
   overflow-wrap: anywhere;
   font-size: clamp(24px, 3vw, 44px);
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -434,7 +437,7 @@ h1 {
   margin-top: 6px;
   color: #b8bec8;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .up-next-metrics {
@@ -455,6 +458,7 @@ h1 {
 
 .up-next-metrics strong {
   font-size: 22px;
+  font-weight: 700;
 }
 
 .detail-window {
@@ -531,6 +535,7 @@ h1 {
 .synced-lyrics strong {
   overflow-wrap: anywhere;
   font-size: clamp(20px, 2.4vw, 38px);
+  font-weight: 650;
   line-height: 1.1;
 }
 

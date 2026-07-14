@@ -83,6 +83,20 @@ docker compose up --build
 
 Compose intentionally fails if `REAPERSET_BRIDGE_HOST_DIR` is not set.
 
+To show a friendly LAN URL instead of Docker's internal network address, set:
+
+```env
+REAPERSET_ACCESS_URL=http://band.local:47391
+```
+
+To also show the real host LAN IP after `band.local`, set:
+
+```env
+REAPERSET_HOST_LAN_IP=192.168.0.236
+```
+
+Your LAN must resolve `band.local` to the machine running Docker. `REAPERSET_HOST_LAN_IP` must be the Docker host IP, not the container IP.
+
 ## Development
 
 Install dependencies:

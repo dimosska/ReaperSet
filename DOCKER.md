@@ -70,6 +70,22 @@ Compose intentionally fails if `REAPERSET_BRIDGE_HOST_DIR` is not set, so it can
 
 This must point to the same folder where `ReaperSet_Bridge.lua` writes `snapshot.json`.
 
+To show a friendly LAN URL in the app, set `REAPERSET_ACCESS_URL` too:
+
+```env
+REAPERSET_ACCESS_URL=http://band.local:47391
+```
+
+`band.local` must resolve to the machine running Docker. Configure that through your router's local DNS, mDNS/Bonjour, or a hosts entry on each device.
+
+To also show the real host LAN IP after `band.local`, set:
+
+```env
+REAPERSET_HOST_LAN_IP=192.168.0.236
+```
+
+Use the IP address of the machine running Docker, not the container IP.
+
 ## REAPER Setup
 
 Keep using the same bridge script:

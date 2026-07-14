@@ -9,6 +9,11 @@ import type { BridgeStatus, ClientCommand, ReaperSnapshot, ServerEvent } from ".
 
 const APP_PORT = Number(process.env.REAPERSET_PORT ?? 47391);
 const APP_HOST = process.env.REAPERSET_HOST ?? "0.0.0.0";
+const HOST_LAN_IP = process.env.REAPERSET_HOST_LAN_IP?.trim() ?? "";
+const ACCESS_URLS = (process.env.REAPERSET_ACCESS_URLS ?? process.env.REAPERSET_ACCESS_URL ?? "")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
 const BRIDGE_DIR = join(homedir(), ".reaperset");
 const SNAPSHOT_PATH = join(BRIDGE_DIR, "snapshot.json");
 const COMMAND_PATH = join(BRIDGE_DIR, "command.txt");
@@ -31,7 +36,15 @@ let lastSeenAt: string | null = null;
 let bridgeConnected = false;
 
 function getAccessUrls(): string[] {
-  const urls = new Set<string>();
+  const urls = new Set<string>(ACCESS_URLS);
+
+  if (HOST_LAN_IP) {
+    urls.add(`http://${HOST_LAN_IP}:${APP_PORT}`);
+  }
+
+  if (urls.size > 0) {
+    return Array.from(urls);
+  }
 
   for (const interfaces of Object.values(networkInterfaces())) {
     for (const networkInterface of interfaces ?? []) {

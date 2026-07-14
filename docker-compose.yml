@@ -8,6 +8,8 @@ services:
     environment:
       REAPERSET_PORT: "47391"
       REAPERSET_BRIDGE_DIR: /data
+      REAPERSET_ACCESS_URL: "${REAPERSET_ACCESS_URL:-}"
+      REAPERSET_HOST_LAN_IP: "${REAPERSET_HOST_LAN_IP:-}"
     volumes:
       - type: bind
         source: "${REAPERSET_BRIDGE_HOST_DIR:?Set REAPERSET_BRIDGE_HOST_DIR to the host .reaperset folder used by REAPER}"
