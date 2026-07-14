@@ -54,6 +54,13 @@ local function beats_per_bar_at(time)
   return beats_per_bar or 4
 end
 
+local function one_bar_before(time)
+  local target_time = math.max(0, tonumber(time) or 0)
+  local target_beats = beat_position(target_time)
+  local preroll_beats = math.max(0, target_beats - beats_per_bar_at(target_time))
+  return math.max(0, reaper.TimeMap2_beatsToTime(0, preroll_beats))
+end
+
 local function trim(value)
   return tostring(value or ""):match("^%s*(.-)%s*$")
 end
@@ -431,6 +438,13 @@ local function run_command(command)
 
   if command == "transport.pause" then
     reaper.OnPauseButton()
+    return
+  end
+
+  local jump_play_position = command:match("^jump%.play%s+([%d%.]+)$")
+  if jump_play_position ~= nil then
+    reaper.SetEditCurPos(one_bar_before(jump_play_position), true, false)
+    reaper.OnPlayButton()
     return
   end
 

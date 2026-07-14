@@ -173,13 +173,30 @@ li.active {
   background: #2b2418;
 }
 
-li span:first-child {
+.song-cue-button {
   display: grid;
   gap: 2px;
   min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.song-cue-button:hover:not(:disabled) {
+  color: #f7edd6;
+  background: transparent;
+}
+
+.song-cue-button:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 li span:last-child {
@@ -325,6 +342,31 @@ h1 {
   line-height: 0.95;
 }
 
+.headline-cue-button {
+  display: block;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+  color: #f4efe5;
+  background: transparent;
+  text-align: left;
+  font-size: clamp(38px, 5vw, 82px);
+  font-weight: 700;
+  line-height: 0.95;
+}
+
+.headline-cue-button:hover:not(:disabled) {
+  color: #f7edd6;
+  background: transparent;
+}
+
+.headline-cue-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .song-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(96px, auto));
@@ -398,7 +440,7 @@ h1 {
   margin-top: 12px;
 }
 
-.section-strip span {
+.section-strip button {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
@@ -410,7 +452,17 @@ h1 {
   font-weight: 650;
 }
 
-.section-strip span.active {
+.section-strip button:hover:not(:disabled) {
+  border-color: #d6b86a;
+  background: #2b2418;
+}
+
+.section-strip button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.section-strip button.active {
   border-color: #d6b86a;
   color: #f7edd6;
   background: #2b2418;
@@ -686,7 +738,7 @@ h1 {
     overflow-x: hidden;
   }
 
-  .section-strip span {
+  .section-strip button {
     flex: 0 0 auto;
   }
 

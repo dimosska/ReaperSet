@@ -122,6 +122,11 @@ async function writeBridgeCommand(command: ClientCommand): Promise<void> {
 
   if (command.type === "jump.next") {
     await writeFile(COMMAND_PATH, `jump ${command.positionSeconds}\n`, "utf8");
+    return;
+  }
+
+  if (command.type === "jump.play") {
+    await writeFile(COMMAND_PATH, `jump.play ${command.positionSeconds}\n`, "utf8");
   }
 }
 

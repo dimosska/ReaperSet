@@ -310,6 +310,15 @@ export function App(): ReactElement {
         : `Snapshot is stale: ${formatAge(bridgeStatus.snapshotAgeMs)}. Restart or reload ReaperSet_Bridge.lua in REAPER.`;
   const appIsOnline = connectionState === "online";
   const canSendCommands = appIsOnline && bridgeStatus?.connected === true;
+  const canCuePlayback = canSendCommands && (snapshot.transport === "stopped" || snapshot.transport === "paused");
+  const startWithPreroll = useCallback(
+    (positionSeconds: number) => {
+      if (canCuePlayback) {
+        sendCommand({ type: "jump.play", positionSeconds });
+      }
+    },
+    [canCuePlayback, sendCommand]
+  );
   const stageAlert = !appIsOnline
     ? "Reconnecting to ReaperSet server..."
     : bridgeIsStale
@@ -375,10 +384,16 @@ export function App(): ReactElement {
             <ol>
               {snapshot.songs.map((song) => (
                 <li key={song.id} className={song.id === currentSong?.id ? "active" : ""}>
-                  <span>
+                  <button
+                    type="button"
+                    className="song-cue-button"
+                    aria-label={`Start ${song.name} one bar before`}
+                    disabled={!canCuePlayback}
+                    onClick={() => startWithPreroll(song.startsAtSeconds)}
+                  >
                     {song.name}
                     {song.lyrics ? <small>lyrics</small> : null}
-                  </span>
+                  </button>
                   <span>{formatTime(song.endsAtSeconds - song.startsAtSeconds)}</span>
                 </li>
               ))}
@@ -417,7 +432,19 @@ export function App(): ReactElement {
         <header className="song-header">
           <div>
             <span className="label">Song</span>
-            <h1>{currentSong?.name ?? "Waiting for song regions"}</h1>
+            {currentSong ? (
+              <button
+                type="button"
+                className="headline-cue-button"
+                aria-label={`Start ${currentSong.name} one bar before`}
+                disabled={!canCuePlayback}
+                onClick={() => startWithPreroll(currentSong.startsAtSeconds)}
+              >
+                {currentSong.name}
+              </button>
+            ) : (
+              <h1>Waiting for song regions</h1>
+            )}
           </div>
           <div className="song-metrics">
             <div>
@@ -446,9 +473,16 @@ export function App(): ReactElement {
           {currentSong && currentSong.sections.length > 0 ? (
             <div className="section-strip">
               {currentSong.sections.map((section) => (
-                <span key={section.id} className={section.id === currentSection?.id ? "active" : ""}>
+                <button
+                  key={section.id}
+                  type="button"
+                  className={section.id === currentSection?.id ? "active" : ""}
+                  aria-label={`Start ${section.name} one bar before`}
+                  disabled={!canCuePlayback}
+                  onClick={() => startWithPreroll(section.startsAtSeconds)}
+                >
                   {section.name}
-                </span>
+                </button>
               ))}
             </div>
           ) : null}

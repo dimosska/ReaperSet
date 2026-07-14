@@ -53,7 +53,8 @@ export interface BridgeStatus {
 export type ClientCommand =
   | { type: "transport.play" }
   | { type: "transport.pause" }
-  | { type: "jump.next"; positionSeconds: number };
+  | { type: "jump.next"; positionSeconds: number }
+  | { type: "jump.play"; positionSeconds: number };
 
 export type ServerEvent =
   | { type: "snapshot"; snapshot: ReaperSnapshot }
