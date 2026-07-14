@@ -27,6 +27,7 @@ const fallbackSnapshot: ReaperSnapshot = {
 };
 
 type ConnectionState = "connecting" | "online" | "reconnecting" | "offline";
+type WakeLockState = "active" | "unsupported" | "blocked";
 
 function formatTime(totalSeconds: number): string {
   const safeSeconds = Math.max(0, totalSeconds);
@@ -50,9 +51,11 @@ export function App(): ReactElement {
   const [snapshot, setSnapshot] = useState<ReaperSnapshot>(fallbackSnapshot);
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
+  const [wakeLockState, setWakeLockState] = useState<WakeLockState>("unsupported");
   const [activeTab, setActiveTab] = useState<"lyrics" | "notes">("lyrics");
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const socketUrl = window.reaperSet
     ? `ws://localhost:${window.reaperSet.serverPort}`
@@ -134,6 +137,55 @@ export function App(): ReactElement {
       activeSocket?.close();
     };
   }, [socketUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function requestWakeLock(): Promise<void> {
+      if (!navigator.wakeLock || document.visibilityState !== "visible") {
+        setWakeLockState("unsupported");
+        return;
+      }
+
+      try {
+        const wakeLock = await navigator.wakeLock.request("screen");
+        if (cancelled) {
+          await wakeLock.release();
+          return;
+        }
+
+        wakeLockRef.current = wakeLock;
+        setWakeLockState("active");
+        wakeLock.addEventListener("release", () => {
+          if (wakeLockRef.current === wakeLock) {
+            wakeLockRef.current = null;
+          }
+          if (!cancelled) {
+            setWakeLockState("blocked");
+          }
+        });
+      } catch {
+        setWakeLockState("blocked");
+      }
+    }
+
+    function handleVisibilityChange(): void {
+      if (document.visibilityState === "visible" && wakeLockRef.current === null) {
+        void requestWakeLock();
+      }
+    }
+
+    void requestWakeLock();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      const wakeLock = wakeLockRef.current;
+      wakeLockRef.current = null;
+      void wakeLock?.release();
+    };
+  }, []);
 
   const sendCommand = useCallback((command: ClientCommand) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -311,6 +363,9 @@ export function App(): ReactElement {
         <div className="status-stack">
           <div className={`status-pill ${connectionState}`}>app {connectionState}</div>
           <div className={`status-pill ${bridgeStatus?.connected ? "online" : "offline"}`}>{bridgeLabel}</div>
+          <div className={`status-pill wake-${wakeLockState}`}>
+            screen {wakeLockState === "active" ? "awake" : "sleep may occur"}
+          </div>
           {bridgeStatus?.accessUrls && bridgeStatus.accessUrls.length > 0 ? (
             <div className="network-access">
               <span className="label">Local Network</span>
