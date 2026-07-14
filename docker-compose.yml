@@ -1,0 +1,13 @@
+services:
+  reaperset:
+    build:
+      context: .
+    image: reaperset:local
+    ports:
+      - "47391:47391"
+    environment:
+      REAPERSET_PORT: "47391"
+      REAPERSET_BRIDGE_DIR: /data
+    volumes:
+      - "${HOME}/.reaperset:/data"
+    restart: unless-stopped
