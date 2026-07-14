@@ -472,26 +472,10 @@ h1 {
   padding: 16px 18px 0;
 }
 
-.tab-panel {
+.lyrics-panel {
   min-height: 0;
   padding: 18px;
   overflow: hidden;
-}
-
-.tab-panel pre {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  white-space: pre-wrap;
-  color: #f4efe5;
-  background: transparent;
-  font: inherit;
-  font-size: clamp(20px, 2.4vw, 40px);
-  line-height: 1.22;
-}
-
-.lyrics-tab {
-  display: block;
 }
 
 .synced-lyrics {
@@ -636,7 +620,7 @@ h1 {
   .song-header,
   .song-part,
   .up-next-panel,
-  .tab-panel {
+  .lyrics-panel {
     padding: 12px;
   }
 

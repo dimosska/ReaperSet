@@ -476,7 +476,7 @@ export function App(): ReactElement {
           <div className="detail-heading">
             <span className="label">Lyrics</span>
           </div>
-          <div className="tab-panel lyrics-tab" role="tabpanel" aria-label="Lyrics">
+          <div className="lyrics-panel">
             {visibleLyrics.length > 0 ? (
               <div className="synced-lyrics">
                 {visibleLyrics.map((lyric) => (
