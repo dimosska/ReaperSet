@@ -24,7 +24,6 @@ export interface Song {
   startsAtBeats?: number;
   endsAtBeats?: number;
   color?: string;
-  notes?: string;
   lyrics?: string;
   timedLyrics: TimedLyric[];
   sections: SongSection[];

@@ -4,7 +4,7 @@
 
 Build a REAPER-focused live playback and setlist controller inspired by AbleSet.
 
-The app should let performers view songs, sections, notes, lyrics, cues, and playback state from a local browser UI while keeping REAPER as the editor and playback engine.
+The app should let performers view songs, sections, lyrics, cues, and playback state from a local browser UI while keeping REAPER as the editor and playback engine.
 
 ## Current Status
 
@@ -26,9 +26,8 @@ The Electron and React scaffold is in place. The first local REAPER bridge uses 
 - [x] Build performance view
 - [x] View REAPER timeline song order
 - [x] Remove app-side setlist editing
-- [x] Add notes support
 - [x] Add basic lyrics support
-- [x] Add time-synced REAPER lyric markers
+- [x] Add time-synced REAPER lyric items
 - [ ] Add chords support
 - [ ] Add MIDI or OSC control mapping
 - [x] Package as Docker container
@@ -54,13 +53,12 @@ Current setup:
 
 Proposed convention:
 
-- Song regions: `@song:Song Name`
+- Song regions: `Song Name`
 - Section markers: `Verse 1`, `Chorus`, `Bridge`, `End`
-- Timed lyric markers: `@lyric:Line text` placed at the exact time or beat
-- Note markers: `@note:Line text` placed inside a song region
+- Timed lyric items: media items on a track named `Lyrics`; use item notes or the item/take name as the lyric line
 - Optional marker tags: `loop=true`, `skip=false`, `color=#RRGGBB`
-- Song order, notes, and lyrics: edited only in REAPER
-- Freeform lyrics/chords: use `@lyric:` markers first, dedicated format later
+- Song order and lyrics: edited only in REAPER
+- Freeform lyrics/chords: use dedicated REAPER tracks or items, not app-side editing
 - Click track: manually prepared REAPER track/items per song for now
 - Voice cues: manually pasted REAPER audio items per song for now
 
@@ -98,14 +96,13 @@ Proposed convention:
 - [x] Use REAPER region order as setlist order
 - [x] Remove named app setlists
 - [x] Display total show duration
-- [x] Add REAPER-authored notes per song
 - [ ] Add colors per song
 
 ### 5. Performance Features
 
 - [ ] Add section looping
 - [x] Add lyrics display
-- [x] Add time-synced lyric display from REAPER markers
+- [x] Add time-synced lyric display from REAPER items
 - [ ] Add chords display
 - [ ] Document click track preparation workflow
 - [ ] Document manual voice cue preparation workflow
@@ -133,7 +130,7 @@ Proposed convention:
 - [x] React vs Svelte vs another frontend: React selected
 - [x] WebSocket protocol shape: app UI uses WebSocket to backend
 - [x] Bridge app host configuration UX: skipped for local-only file bridge
-- [x] Lyrics source format: REAPER `@lyric:` markers
+- [x] Lyrics source format: media items on a REAPER track named `Lyrics`
 - [ ] Chords source format
 - [x] Whether to support multi-project setlists in MVP: no app-side setlists for MVP
 - [ ] Whether to require SWS/ReaPack or stay pure REAPER Lua
@@ -152,4 +149,4 @@ Proposed convention:
 - Keep the MVP local-first and usable without internet.
 - Treat REAPER as the playback source of truth.
 - Treat the app as a read-only stage surface with Play, Pause, and Next controls.
-- Treat REAPER as the only editor for song order, notes, lyrics, click tracks, and voice cues.
+- Treat REAPER as the only editor for song order, lyrics, click tracks, and voice cues.

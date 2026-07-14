@@ -1,13 +1,14 @@
 # ReaperSet
 
-ReaperSet is a REAPER-focused live playback and setlist controller. It keeps REAPER as the source of truth for songs, markers, regions, notes, lyrics, cues, and playback, while providing a clean stage UI for performers on the local machine or local network.
+ReaperSet is a REAPER-focused live playback and setlist controller. It keeps REAPER as the source of truth for songs, markers, regions, lyrics, cues, and playback, while providing a clean stage UI for performers on the local machine or local network.
 
 The app is inspired by AbleSet-style live set control, but is built around REAPER projects and ReaScript automation.
 
 ## What It Does
 
-- Reads REAPER song regions named with `@song:Song Name`
-- Uses REAPER markers as song sections, cues, notes, and timed lyrics
+- Reads REAPER regions as songs
+- Uses REAPER markers as song sections and cues
+- Reads timed lyrics from media items on a REAPER track named `Lyrics`
 - Shows the current song, song part, elapsed time, remaining time, and total set length
 - Displays the next cue with bars/beats countdown data from REAPER's tempo map
 - Provides Play, Pause, and Next controls back to REAPER
@@ -42,13 +43,12 @@ The app writes commands for REAPER to:
 
 ## REAPER Marker Convention
 
-- Song regions: `@song:Song Name`
+- Song regions: `Song Name`
 - Section markers: `Verse 1`, `Chorus`, `Bridge`, `End`
-- Timed lyric markers: `@lyric:Line text`
-- Note markers: `@note:Line text`
+- Timed lyric items: media items on a track named `Lyrics`; use item notes or the item/take name as the lyric line
 - Optional section tags: `loop=true` or `[loop]`
 
-Song order, notes, lyrics, click tracks, voice cues, and timing remain edited in REAPER.
+Song order, lyrics, click tracks, voice cues, and timing remain edited in REAPER.
 
 ## REAPER Bridge Setup
 

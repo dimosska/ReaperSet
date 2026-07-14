@@ -64,22 +64,27 @@ end
 
 local function parse_song_name(region_name)
   local name = trim(region_name)
+  local lower_name = name:lower()
 
-  if starts_with(name, "@song:") then
+  if name == "" then
+    return nil
+  end
+
+  if starts_with(lower_name, "@song:") then
     return trim(name:sub(7))
   end
 
-  if starts_with(name:lower(), "[song]") then
+  if starts_with(lower_name, "[song]") then
     return trim(name:sub(7))
   end
 
-  return nil
+  return name
 end
 
 local function parse_section_name(marker_name)
   local name = trim(marker_name)
 
-  if name == "" or starts_with(name, "@") then
+  if name == "" then
     return nil
   end
 
@@ -89,26 +94,6 @@ local function parse_section_name(marker_name)
   end
 
   return display_name
-end
-
-local function parse_lyric_text(marker_name)
-  local name = trim(marker_name)
-
-  if starts_with(name:lower(), "@lyric:") then
-    return trim(name:sub(8))
-  end
-
-  return nil
-end
-
-local function parse_note_text(marker_name)
-  local name = trim(marker_name)
-
-  if starts_with(name:lower(), "@note:") then
-    return trim(name:sub(7))
-  end
-
-  return nil
 end
 
 local function marker_is_loopable(marker_name)
@@ -128,10 +113,81 @@ local function marker_color(marker_color_value)
   return string.format("#%02X%02X%02X", red, green, blue)
 end
 
+local function track_name(track)
+  local ok, name = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
+  if ok then
+    return trim(name)
+  end
+
+  return ""
+end
+
+local function find_track_by_name(expected_name)
+  local expected = trim(expected_name):lower()
+  local track_count = reaper.CountTracks(0)
+
+  for index = 0, track_count - 1 do
+    local track = reaper.GetTrack(0, index)
+    if track ~= nil and track_name(track):lower() == expected then
+      return track
+    end
+  end
+
+  return nil
+end
+
+local function item_text(item)
+  local ok, notes = reaper.GetSetMediaItemInfo_String(item, "P_NOTES", "", false)
+  if ok and trim(notes) ~= "" then
+    return trim(notes)
+  end
+
+  local take = reaper.GetActiveTake(item)
+
+  if take ~= nil then
+    local take_name = trim(reaper.GetTakeName(take))
+    if take_name ~= "" then
+      return take_name
+    end
+  end
+
+  return nil
+end
+
+local function collect_lyrics()
+  local lyrics = {}
+  local lyrics_track = find_track_by_name("Lyrics")
+
+  if lyrics_track == nil then
+    return lyrics
+  end
+
+  local item_count = reaper.CountTrackMediaItems(lyrics_track)
+
+  for index = 0, item_count - 1 do
+    local item = reaper.GetTrackMediaItem(lyrics_track, index)
+    local text = item_text(item)
+
+    if text ~= nil and text ~= "" then
+      local position = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+
+      lyrics[#lyrics + 1] = {
+        id = "lyric-item-" .. tostring(index + 1),
+        text = text,
+        starts_at = position
+      }
+    end
+  end
+
+  table.sort(lyrics, function(left, right)
+    return left.starts_at < right.starts_at
+  end)
+
+  return lyrics
+end
+
 local function collect_markers()
   local markers = {}
-  local lyrics = {}
-  local notes = {}
   local regions = {}
   local _, marker_count, region_count = reaper.CountProjectMarkers(0)
   local total = marker_count + region_count
@@ -156,8 +212,6 @@ local function collect_markers()
         end
       else
         local section_name = parse_section_name(name)
-        local lyric_text = parse_lyric_text(name)
-        local note_text = parse_note_text(name)
 
         if section_name ~= nil then
           markers[#markers + 1] = {
@@ -166,22 +220,6 @@ local function collect_markers()
             starts_at = position,
             starts_at_beats = beat_position(position),
             loopable = marker_is_loopable(name)
-          }
-        end
-
-        if lyric_text ~= nil and lyric_text ~= "" then
-          lyrics[#lyrics + 1] = {
-            id = "lyric-" .. tostring(marker_index),
-            text = lyric_text,
-            starts_at = position
-          }
-        end
-
-        if note_text ~= nil and note_text ~= "" then
-          notes[#notes + 1] = {
-            id = "note-" .. tostring(marker_index),
-            text = note_text,
-            starts_at = position
           }
         end
       end
@@ -196,23 +234,14 @@ local function collect_markers()
     return left.starts_at < right.starts_at
   end)
 
-  table.sort(lyrics, function(left, right)
-    return left.starts_at < right.starts_at
-  end)
-
-  table.sort(notes, function(left, right)
-    return left.starts_at < right.starts_at
-  end)
-
-  return regions, markers, lyrics, notes
+  return regions, markers, collect_lyrics()
 end
 
 local function build_songs()
-  local regions, markers, lyrics, notes = collect_markers()
+  local regions, markers, lyrics = collect_markers()
 
   for _, region in ipairs(regions) do
     region.lyrics = {}
-    region.notes = {}
 
     for _, marker in ipairs(markers) do
       if marker.starts_at >= region.starts_at and marker.starts_at < region.ends_at then
@@ -235,12 +264,6 @@ local function build_songs()
           text = lyric.text,
           starts_at = lyric.starts_at
         }
-      end
-    end
-
-    for _, note in ipairs(notes) do
-      if note.starts_at >= region.starts_at and note.starts_at < region.ends_at then
-        region.notes[#region.notes + 1] = note.text
       end
     end
 
@@ -309,7 +332,6 @@ local function encode_songs(songs)
       '"startsAtBeats":', json_number(song.starts_at_beats), ",",
       '"endsAtBeats":', json_number(song.ends_at_beats), ",",
       '"color":', color_json, ",",
-      '"notes":', encode_multiline_text(song.notes), ",",
       '"lyrics":', encode_multiline_text((function()
         local lines = {}
         for _, lyric in ipairs(song.lyrics) do

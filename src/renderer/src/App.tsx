@@ -417,7 +417,7 @@ export function App(): ReactElement {
         <header className="song-header">
           <div>
             <span className="label">Song</span>
-            <h1>{currentSong?.name ?? "Waiting for @song regions"}</h1>
+            <h1>{currentSong?.name ?? "Waiting for song regions"}</h1>
           </div>
           <div className="song-metrics">
             <div>
@@ -486,7 +486,7 @@ export function App(): ReactElement {
                 ))}
               </div>
             ) : (
-              <div className="empty-state">No REAPER @lyric markers for this song.</div>
+              <div className="empty-state">No lyrics items for this song.</div>
             )}
           </div>
         </section>
