@@ -9,5 +9,5 @@ services:
       REAPERSET_PORT: "47391"
       REAPERSET_BRIDGE_DIR: /data
     volumes:
-      - "${HOME}/.reaperset:/data"
+      - "${REAPERSET_BRIDGE_HOST_DIR:-${HOME}/.reaperset}:/data"
     restart: unless-stopped

@@ -74,12 +74,16 @@ function broadcast(event: ServerEvent): void {
 }
 
 function getBridgeStatus(): BridgeStatus {
+  const snapshotAgeMs = lastSeenAt === null ? null : Math.max(0, Date.now() - Date.parse(lastSeenAt));
+
   return {
     mode: "local-file",
     snapshotPath: SNAPSHOT_PATH,
     commandPath: COMMAND_PATH,
     accessUrls: getAccessUrls(),
     connected: bridgeConnected,
+    snapshotExists: existsSync(SNAPSHOT_PATH),
+    snapshotAgeMs,
     lastSeenAt
   };
 }

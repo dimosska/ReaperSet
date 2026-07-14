@@ -47,6 +47,25 @@ function formatBarsBeats(totalBeats: number, beatsPerBar: number): string {
   return `${bars} ${barLabel} ${beats} ${beatLabel}`;
 }
 
+function formatAge(ageMs: number | null): string {
+  if (ageMs === null) {
+    return "never";
+  }
+
+  const seconds = Math.floor(ageMs / 1000);
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
 export function App(): ReactElement {
   const [snapshot, setSnapshot] = useState<ReaperSnapshot>(fallbackSnapshot);
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
@@ -286,12 +305,18 @@ export function App(): ReactElement {
 
   const bridgeLabel = bridgeStatus?.connected ? "bridge online" : "bridge offline";
   const bridgeIsStale = bridgeStatus !== null && !bridgeStatus.connected;
+  const bridgeOfflineReason =
+    bridgeStatus === null
+      ? "No bridge status yet."
+      : !bridgeStatus.snapshotExists
+        ? `No snapshot at ${bridgeStatus.snapshotPath}. Check the Docker volume mount.`
+        : `Snapshot is stale: ${formatAge(bridgeStatus.snapshotAgeMs)}. Restart or reload ReaperSet_Bridge.lua in REAPER.`;
   const appIsOnline = connectionState === "online";
   const canSendCommands = appIsOnline && bridgeStatus?.connected === true;
   const stageAlert = !appIsOnline
     ? "Reconnecting to ReaperSet server..."
     : bridgeIsStale
-      ? "Waiting for REAPER bridge updates..."
+      ? bridgeOfflineReason
       : null;
   const songPosition = currentSong ? snapshot.positionSeconds - currentSong.startsAtSeconds : 0;
   const songRemaining = currentSong ? currentSong.endsAtSeconds - snapshot.positionSeconds : 0;
@@ -363,6 +388,13 @@ export function App(): ReactElement {
         <div className="status-stack">
           <div className={`status-pill ${connectionState}`}>app {connectionState}</div>
           <div className={`status-pill ${bridgeStatus?.connected ? "online" : "offline"}`}>{bridgeLabel}</div>
+          {bridgeStatus && !bridgeStatus.connected ? (
+            <div className="bridge-diagnostic">
+              <span className="label">Bridge Check</span>
+              <span>{bridgeStatus.snapshotExists ? `snapshot ${formatAge(bridgeStatus.snapshotAgeMs)}` : "snapshot missing"}</span>
+              <small>{bridgeStatus.snapshotPath}</small>
+            </div>
+          ) : null}
           <div className={`status-pill wake-${wakeLockState}`}>
             screen {wakeLockState === "active" ? "awake" : "sleep may occur"}
           </div>

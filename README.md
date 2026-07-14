@@ -65,6 +65,13 @@ The bridge creates `~/.reaperset` automatically. ReaperSet and REAPER must use t
 
 To use a tablet or another computer on the same network, start ReaperSet on the REAPER machine and open one of the `Local Network` URLs shown in the app status area. Firewalls must allow inbound connections to port `47391`.
 
+When running Docker on Windows, set `REAPERSET_BRIDGE_HOST_DIR` to the same folder REAPER uses before starting Compose:
+
+```powershell
+$env:REAPERSET_BRIDGE_HOST_DIR="$env:USERPROFILE\.reaperset"
+docker compose up --build
+```
+
 ## Development
 
 Install dependencies:

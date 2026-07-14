@@ -38,6 +38,15 @@ http://localhost:47391
 docker compose up --build
 ```
 
+On Windows, run Docker Compose from PowerShell with the bridge folder set explicitly:
+
+```powershell
+$env:REAPERSET_BRIDGE_HOST_DIR="$env:USERPROFILE\.reaperset"
+docker compose up --build
+```
+
+This must point to the same folder where `ReaperSet_Bridge.lua` writes `snapshot.json`.
+
 ## REAPER Setup
 
 Keep using the same bridge script:
@@ -47,6 +56,14 @@ reaper/ReaperSet_Bridge.lua
 ```
 
 Reload the script in REAPER after bridge changes. The Docker container and REAPER must share the same `~/.reaperset` folder through the volume mount.
+
+On Windows, the bridge usually writes to:
+
+```text
+C:\Users\<you>\.reaperset\snapshot.json
+```
+
+If the web UI says `snapshot missing`, the Docker volume is pointed at the wrong host folder. If it says `snapshot stale`, the folder is mounted but the REAPER bridge script is not actively updating `snapshot.json`.
 
 ## Limitations
 

@@ -46,6 +46,8 @@ export interface BridgeStatus {
   commandPath: string;
   accessUrls?: string[];
   connected: boolean;
+  snapshotExists: boolean;
+  snapshotAgeMs: number | null;
   lastSeenAt: string | null;
 }
 
