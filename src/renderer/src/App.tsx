@@ -33,6 +33,17 @@ function formatTime(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function formatBarsBeats(totalBeats: number, beatsPerBar: number): string {
+  const safeBeatsPerBar = Math.max(1, Math.round(beatsPerBar));
+  const wholeBeats = Math.max(0, Math.ceil(totalBeats - 0.01));
+  const bars = Math.floor(wholeBeats / safeBeatsPerBar);
+  const beats = wholeBeats % safeBeatsPerBar;
+  const barLabel = bars === 1 ? "bar" : "bars";
+  const beatLabel = beats === 1 ? "beat" : "beats";
+
+  return `${bars} ${barLabel} ${beats} ${beatLabel}`;
+}
+
 export function App(): ReactElement {
   const [snapshot, setSnapshot] = useState<ReaperSnapshot>(fallbackSnapshot);
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
@@ -115,6 +126,35 @@ export function App(): ReactElement {
     return snapshot.songs[currentIndex + 1] ?? null;
   }, [currentSong, snapshot.songs]);
 
+  const nextCue = useMemo<{ name: string; startsAtSeconds: number; startsAtBeats?: number } | null>(() => {
+    if (currentSong === null) {
+      return null;
+    }
+
+    const nextSection = currentSong.sections.find((section) => section.startsAtSeconds > snapshot.positionSeconds + 0.025);
+    if (nextSection) {
+      return {
+        name: nextSection.name,
+        startsAtSeconds: nextSection.startsAtSeconds,
+        startsAtBeats: nextSection.startsAtBeats
+      };
+    }
+
+    if (nextSong) {
+      return {
+        name: nextSong.name,
+        startsAtSeconds: nextSong.startsAtSeconds,
+        startsAtBeats: nextSong.startsAtBeats
+      };
+    }
+
+    return {
+      name: "Song end",
+      startsAtSeconds: currentSong.endsAtSeconds,
+      startsAtBeats: currentSong.endsAtBeats
+    };
+  }, [currentSong, nextSong, snapshot.positionSeconds]);
+
   const visibleLyrics = useMemo<Array<TimedLyric & { active: boolean }>>(() => {
     const timedLyrics = currentSong?.timedLyrics ?? [];
     if (timedLyrics.length === 0) {
@@ -141,6 +181,12 @@ export function App(): ReactElement {
   const bridgeLabel = bridgeStatus?.connected ? "bridge online" : "bridge offline";
   const songPosition = currentSong ? snapshot.positionSeconds - currentSong.startsAtSeconds : 0;
   const songRemaining = currentSong ? currentSong.endsAtSeconds - snapshot.positionSeconds : 0;
+  const barsBeatsToNextCue =
+    typeof snapshot.positionBeats === "number" &&
+    typeof snapshot.beatsPerBar === "number" &&
+    typeof nextCue?.startsAtBeats === "number"
+      ? formatBarsBeats(nextCue.startsAtBeats - snapshot.positionBeats, snapshot.beatsPerBar)
+      : null;
 
   return (
     <main className="app-shell">
@@ -223,6 +269,11 @@ export function App(): ReactElement {
         <section className="song-part">
           <span className="label">Song Part</span>
           <strong>{currentSection?.name ?? "No section marker"}</strong>
+          <div className="next-cue-line">
+            <span>Next cue</span>
+            <strong>{barsBeatsToNextCue ?? "--"}</strong>
+            <em>{nextCue?.name ?? "No next cue"}</em>
+          </div>
           {currentSong && currentSong.sections.length > 0 ? (
             <div className="section-strip">
               {currentSong.sections.map((section) => (

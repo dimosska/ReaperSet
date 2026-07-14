@@ -5,6 +5,8 @@ export interface SongSection {
   name: string;
   startsAtSeconds: number;
   endsAtSeconds?: number;
+  startsAtBeats?: number;
+  endsAtBeats?: number;
   loopable: boolean;
 }
 
@@ -19,6 +21,8 @@ export interface Song {
   name: string;
   startsAtSeconds: number;
   endsAtSeconds: number;
+  startsAtBeats?: number;
+  endsAtBeats?: number;
   color?: string;
   notes?: string;
   lyrics?: string;
@@ -30,6 +34,8 @@ export interface ReaperSnapshot {
   projectName: string | null;
   transport: TransportState;
   positionSeconds: number;
+  positionBeats?: number;
+  beatsPerBar?: number;
   songs: Song[];
   updatedAt: string;
 }

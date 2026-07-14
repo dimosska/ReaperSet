@@ -44,6 +44,16 @@ local function json_number(value)
   return string.format("%.3f", tonumber(value) or 0)
 end
 
+local function beat_position(time)
+  local _, _, _, full_beats = reaper.TimeMap2_timeToBeats(0, time)
+  return full_beats or 0
+end
+
+local function beats_per_bar_at(time)
+  local _, _, beats_per_bar = reaper.TimeMap2_timeToBeats(0, time)
+  return beats_per_bar or 4
+end
+
 local function trim(value)
   return tostring(value or ""):match("^%s*(.-)%s*$")
 end
@@ -138,6 +148,8 @@ local function collect_markers()
             name = song_name,
             starts_at = position,
             ends_at = region_end,
+            starts_at_beats = beat_position(position),
+            ends_at_beats = beat_position(region_end),
             color = marker_color(color),
             sections = {}
           }
@@ -152,6 +164,7 @@ local function collect_markers()
             id = "section-" .. tostring(marker_index),
             name = section_name,
             starts_at = position,
+            starts_at_beats = beat_position(position),
             loopable = marker_is_loopable(name)
           }
         end
@@ -207,7 +220,9 @@ local function build_songs()
           id = marker.id,
           name = marker.name,
           starts_at = marker.starts_at,
+          starts_at_beats = marker.starts_at_beats,
           ends_at = nil,
+          ends_at_beats = nil,
           loopable = marker.loopable
         }
       end
@@ -232,6 +247,7 @@ local function build_songs()
     for index, section in ipairs(region.sections) do
       local next_section = region.sections[index + 1]
       section.ends_at = next_section and next_section.starts_at or region.ends_at
+      section.ends_at_beats = next_section and next_section.starts_at_beats or region.ends_at_beats
     end
   end
 
@@ -248,6 +264,8 @@ local function encode_sections(sections)
       '"name":', json_string(section.name), ",",
       '"startsAtSeconds":', json_number(section.starts_at), ",",
       '"endsAtSeconds":', json_number(section.ends_at), ",",
+      '"startsAtBeats":', json_number(section.starts_at_beats), ",",
+      '"endsAtBeats":', json_number(section.ends_at_beats), ",",
       '"loopable":', section.loopable and "true" or "false",
       "}"
     })
@@ -288,6 +306,8 @@ local function encode_songs(songs)
       '"name":', json_string(song.name), ",",
       '"startsAtSeconds":', json_number(song.starts_at), ",",
       '"endsAtSeconds":', json_number(song.ends_at), ",",
+      '"startsAtBeats":', json_number(song.starts_at_beats), ",",
+      '"endsAtBeats":', json_number(song.ends_at_beats), ",",
       '"color":', color_json, ",",
       '"notes":', encode_multiline_text(song.notes), ",",
       '"lyrics":', encode_multiline_text((function()
@@ -323,6 +343,7 @@ end
 local function build_snapshot()
   local _, project_name = reaper.EnumProjects(-1)
   local display_name = nil
+  local position = reaper.GetPlayPosition()
 
   if project_name ~= nil and project_name ~= "" then
     display_name = project_name:match("([^/\\]+)$") or project_name
@@ -332,7 +353,9 @@ local function build_snapshot()
     "{",
     '"projectName":', json_string(display_name), ",",
     '"transport":', json_string(current_transport()), ",",
-    '"positionSeconds":', json_number(reaper.GetPlayPosition()), ",",
+    '"positionSeconds":', json_number(position), ",",
+    '"positionBeats":', json_number(beat_position(position)), ",",
+    '"beatsPerBar":', json_number(beats_per_bar_at(position)), ",",
     '"songs":', encode_songs(build_songs()), ",",
     '"updatedAt":', json_string(os.date("!%Y-%m-%dT%H:%M:%SZ")),
     "}"

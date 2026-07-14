@@ -253,6 +253,37 @@ h1 {
   line-height: 1;
 }
 
+.next-cue-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #30333a;
+}
+
+.next-cue-line span {
+  color: #d6b86a;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.next-cue-line strong {
+  color: #f7edd6;
+  font-size: clamp(24px, 3vw, 42px);
+  line-height: 1;
+}
+
+.next-cue-line em {
+  color: #b8bec8;
+  overflow-wrap: anywhere;
+  font-style: normal;
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 800;
+}
+
 .section-strip {
   display: flex;
   flex-wrap: wrap;
