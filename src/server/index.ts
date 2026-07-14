@@ -1,13 +1,14 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { homedir } from "node:os";
+import { homedir, networkInterfaces } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import type { BridgeStatus, ClientCommand, ReaperSnapshot, ServerEvent } from "../shared/protocol";
 
 const APP_PORT = Number(process.env.REAPERSET_PORT ?? 47391);
+const APP_HOST = process.env.REAPERSET_HOST ?? "0.0.0.0";
 const BRIDGE_DIR = process.env.REAPERSET_BRIDGE_DIR ?? join(homedir(), ".reaperset");
 const SNAPSHOT_PATH = join(BRIDGE_DIR, "snapshot.json");
 const COMMAND_PATH = join(BRIDGE_DIR, "command.txt");
@@ -26,6 +27,20 @@ let latestSnapshot = initialSnapshot;
 let lastSnapshotPayload = "";
 let lastSeenAt: string | null = null;
 let bridgeConnected = false;
+
+function getAccessUrls(): string[] {
+  const urls = new Set<string>();
+
+  for (const interfaces of Object.values(networkInterfaces())) {
+    for (const networkInterface of interfaces ?? []) {
+      if (networkInterface.family === "IPv4" && !networkInterface.internal) {
+        urls.add(`http://${networkInterface.address}:${APP_PORT}`);
+      }
+    }
+  }
+
+  return urls.size > 0 ? Array.from(urls) : [`http://localhost:${APP_PORT}`];
+}
 
 function contentType(pathname: string): string {
   const extension = extname(pathname);
@@ -63,6 +78,7 @@ function getBridgeStatus(): BridgeStatus {
     mode: "local-file",
     snapshotPath: SNAPSHOT_PATH,
     commandPath: COMMAND_PATH,
+    accessUrls: getAccessUrls(),
     connected: bridgeConnected,
     lastSeenAt
   };
@@ -220,8 +236,10 @@ const bridgePoll = setInterval(() => {
   });
 }, 250);
 
-httpServer.listen(APP_PORT, "0.0.0.0", () => {
-  console.log(`ReaperSet web server listening on http://0.0.0.0:${APP_PORT}`);
+httpServer.listen(APP_PORT, APP_HOST, () => {
+  console.log(`ReaperSet web server listening on http://${APP_HOST}:${APP_PORT}`);
+  console.log(`ReaperSet local URL: http://localhost:${APP_PORT}`);
+  console.log(`ReaperSet local network URLs: ${getAccessUrls().join(", ")}`);
   console.log(`ReaperSet static root: ${STATIC_ROOT}`);
   console.log(`ReaperSet bridge snapshot: ${SNAPSHOT_PATH}`);
   console.log(`ReaperSet bridge command: ${COMMAND_PATH}`);

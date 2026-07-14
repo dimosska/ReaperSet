@@ -44,6 +44,7 @@ export interface BridgeStatus {
   mode: "local-file";
   snapshotPath: string;
   commandPath: string;
+  accessUrls?: string[];
   connected: boolean;
   lastSeenAt: string | null;
 }

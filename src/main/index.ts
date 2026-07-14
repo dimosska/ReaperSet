@@ -1,17 +1,19 @@
 import { app, BrowserWindow } from "electron";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { homedir } from "node:os";
+import { extname, join, normalize } from "node:path";
+import { homedir, networkInterfaces } from "node:os";
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
 import type { BridgeStatus, ClientCommand, ReaperSnapshot, ServerEvent } from "../shared/protocol";
 
 const APP_PORT = Number(process.env.REAPERSET_PORT ?? 47391);
+const APP_HOST = process.env.REAPERSET_HOST ?? "0.0.0.0";
 const BRIDGE_DIR = join(homedir(), ".reaperset");
 const SNAPSHOT_PATH = join(BRIDGE_DIR, "snapshot.json");
 const COMMAND_PATH = join(BRIDGE_DIR, "command.txt");
 const BRIDGE_TIMEOUT_MS = 3_000;
+const STATIC_ROOT = normalize(join(__dirname, "../renderer"));
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -28,6 +30,42 @@ let lastSnapshotPayload = "";
 let lastSeenAt: string | null = null;
 let bridgeConnected = false;
 
+function getAccessUrls(): string[] {
+  const urls = new Set<string>();
+
+  for (const interfaces of Object.values(networkInterfaces())) {
+    for (const networkInterface of interfaces ?? []) {
+      if (networkInterface.family === "IPv4" && !networkInterface.internal) {
+        urls.add(`http://${networkInterface.address}:${APP_PORT}`);
+      }
+    }
+  }
+
+  return urls.size > 0 ? Array.from(urls) : [`http://localhost:${APP_PORT}`];
+}
+
+function contentType(pathname: string): string {
+  const extension = extname(pathname);
+
+  if (extension === ".html") {
+    return "text/html; charset=utf-8";
+  }
+
+  if (extension === ".js") {
+    return "text/javascript; charset=utf-8";
+  }
+
+  if (extension === ".css") {
+    return "text/css; charset=utf-8";
+  }
+
+  if (extension === ".svg") {
+    return "image/svg+xml";
+  }
+
+  return "application/octet-stream";
+}
+
 function broadcast(event: ServerEvent): void {
   const payload = JSON.stringify(event);
   for (const client of webSocketServer.clients) {
@@ -42,6 +80,7 @@ function getBridgeStatus(): BridgeStatus {
     mode: "local-file",
     snapshotPath: SNAPSHOT_PATH,
     commandPath: COMMAND_PATH,
+    accessUrls: getAccessUrls(),
     connected: bridgeConnected,
     lastSeenAt
   };
@@ -103,27 +142,68 @@ async function readBridgeSnapshot(): Promise<void> {
   }
 }
 
+async function serveStatic(pathname: string): Promise<{ body: Buffer; type: string } | null> {
+  const decodedPath = decodeURIComponent(pathname);
+  const relativePath = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
+  const filePath = normalize(join(STATIC_ROOT, relativePath));
+
+  if (!filePath.startsWith(STATIC_ROOT)) {
+    return null;
+  }
+
+  try {
+    return {
+      body: await readFile(filePath),
+      type: contentType(filePath)
+    };
+  } catch {
+    if (!relativePath.includes(".")) {
+      return {
+        body: await readFile(join(STATIC_ROOT, "index.html")),
+        type: "text/html; charset=utf-8"
+      };
+    }
+
+    return null;
+  }
+}
+
 const httpServer = createServer((request, response) => {
-  if (request.url === "/health") {
+  const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+
+  if (url.pathname === "/health") {
     response.writeHead(200, { "content-type": "application/json" });
     response.end(JSON.stringify({ ok: true, app: "ReaperSet" }));
     return;
   }
 
-  if (request.url === "/snapshot") {
+  if (url.pathname === "/snapshot") {
     response.writeHead(200, { "content-type": "application/json" });
     response.end(JSON.stringify(latestSnapshot));
     return;
   }
 
-  if (request.url === "/bridge/status") {
+  if (url.pathname === "/bridge/status") {
     response.writeHead(200, { "content-type": "application/json" });
     response.end(JSON.stringify(getBridgeStatus()));
     return;
   }
 
-  response.writeHead(404, { "content-type": "application/json" });
-  response.end(JSON.stringify({ error: "not_found" }));
+  serveStatic(url.pathname)
+    .then((result) => {
+      if (result === null) {
+        response.writeHead(404, { "content-type": "application/json" });
+        response.end(JSON.stringify({ error: "not_found" }));
+        return;
+      }
+
+      response.writeHead(200, { "content-type": result.type });
+      response.end(result.body);
+    })
+    .catch((error: unknown) => {
+      response.writeHead(500, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: error instanceof Error ? error.message : "server_error" }));
+    });
 });
 
 const webSocketServer = new WebSocketServer({ server: httpServer });
@@ -158,8 +238,10 @@ const bridgePoll = setInterval(() => {
   });
 }, 250);
 
-httpServer.listen(APP_PORT, "0.0.0.0", () => {
-  console.log(`ReaperSet server listening on http://localhost:${APP_PORT}`);
+httpServer.listen(APP_PORT, APP_HOST, () => {
+  console.log(`ReaperSet server listening on http://${APP_HOST}:${APP_PORT}`);
+  console.log(`ReaperSet local URL: http://localhost:${APP_PORT}`);
+  console.log(`ReaperSet local network URLs: ${getAccessUrls().join(", ")}`);
   console.log(`ReaperSet bridge snapshot: ${SNAPSHOT_PATH}`);
   console.log(`ReaperSet bridge command: ${COMMAND_PATH}`);
 });

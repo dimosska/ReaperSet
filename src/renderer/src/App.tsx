@@ -241,6 +241,16 @@ export function App(): ReactElement {
         <div className="status-stack">
           <div className={`status-pill ${connectionState}`}>app {connectionState}</div>
           <div className={`status-pill ${bridgeStatus?.connected ? "online" : "offline"}`}>{bridgeLabel}</div>
+          {bridgeStatus?.accessUrls && bridgeStatus.accessUrls.length > 0 ? (
+            <div className="network-access">
+              <span className="label">Local Network</span>
+              {bridgeStatus.accessUrls.slice(0, 3).map((url) => (
+                <a key={url} href={url}>
+                  {url}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
       </aside>
 
