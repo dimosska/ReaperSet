@@ -2,6 +2,7 @@
   "name": "reaperset",
   "version": "0.1.0",
   "description": "A REAPER-focused live playback and setlist controller.",
+  "license": "MIT",
   "private": true,
   "main": "./out/main/index.js",
   "type": "module",
